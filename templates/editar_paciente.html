@@ -1,0 +1,29 @@
+{% extends "base.html" %} <!-- Hereda de archivo HTML -->
+{% block title %}Editar Paciente{% endblock %} <!-- Título de la página -->
+{% block content %} <!-- Aquí se define el contenido específico de la página -->
+    <h2>Editar Pacientes</h2>
+    <form action="" method="post">
+        <div class="mb-3">
+            <!-- Campos de texto para el nombre del paciente -->
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" value="{{ paciente[1] }}" class="form-control">
+        </div>
+        <div class="mb-3">
+            <!-- Campo de texto para la edad del paciente -->
+            <label for="edad">Edad:</label>
+            <input type="number" id="edad" name="edad" value="{{ paciente[2] }}" class="form-control">
+        </div>
+        <div class="mb-3">
+            <!-- Campo de texto para el diagnóstico del paciente -->
+            <label for="diagnostico">Diagnóstico:</label>
+            <input type="text" id="diagnostico" name="diagnostico" value="{{ paciente[3] }}" class="form-control">
+        </div>
+        <!-- Botón para guardar los cambios -->
+        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+    </form>
+
+    <br><br>
+
+    <!-- Enlace para volver a la lista de pacientes -->
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">Volver a la lista de pacientes</a>
+{% endblock %} <!-- Fin del bloque de contenido -->
