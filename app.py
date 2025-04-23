@@ -1,7 +1,9 @@
-from flask import Flask, request, render_template, redirect, url_for, session, flash
-
+from flask import Flask, request, render_template, redirect, url_for, session, flash, Response
+import sqlite3
 import db
 import secrets
+import csv
+import pandas as pd
 
 app = Flask(__name__)
 print(secrets.token_hex(32))  # Genera una clave secreta segura para producción
@@ -162,7 +164,48 @@ def requerir_login():
     if request.endpoint not in rutas_libres and 'usuario' not in session:
         return redirect(url_for('login'))
  
+@app.route('/exportar_csv')
+def exportar_csv():
+    # Conectarnos a la base de datos
+    conn = sqlite3.connect('data.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM Pacientes')
+    filas = cursor.fetchall()
+    conn.close()    
+
+# Creamos un objeto de respuesta CSV
+    def generar_csv():
+        yield 'Nombre,Edad,Diagnóstico\n' # Encabezados del CSV
+
+        for fila in filas:
+            yield f'{fila[1]},{fila[2]},{fila[3]}\n' # Datos de cada fila      
+            # Para cada fila se genera una línea CSV 
+    return Response(generar_csv(), mimetype='text/csv', headers={'Content-Disposition': 'attachment; filename=pacientes.csv'})
+    # Response crea una respuesta HTTP con el contenido generado por la función generar_csv()
+    # mimetype especifica el tipo de contenido como CSV, y headers establece el nombre del archivo CSV que se descargará.
+    # La función generar_csv() genera el contenido del archivo CSV línea por línea, lo que permite manejar grandes conjuntos de datos
+ 
+@app.route('/exportar_excel')
+def exportar_excel():
+    # Conectarnos a la base de datos
+    conn = sqlite3.connect('data.db')
+    df = pd.read_sql_query('SELECT nombre, edad, diagnostico FROM Pacientes', conn)
+    conn.close()
+    # Guardamos el DataFrame en un archivo Excel
+    output = pd.ExcelWriter('pacientes.xlsx', engine='openpyxl')
+    df.to_excel(output, index=False, sheet_name='Pacientes')
+
+    output.close()
+
+    with open('pacientes.xlsx', 'rb') as f:
+        data = f.read()
+
+    # Regresamos el archivo Excel como respuesta
+    return Response(data, 
+                    mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    headers={'Content-Disposition': 'attachment; filename=pacientes.xlsx'})
 
 
+   
 app.run(host= '0.0.0.0', port=5000, debug=True)
 
