@@ -1,20 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Lista de Pacientes{% endblock %}
 {% block content %} <!-- Contenido de la página --> 
-    <!-- Enlace a la vista de nuevo paciente -->
-    <a href="{{url_for('nuevo_paciente')}}" class="btn btn-primary mb-3">Nuevo Paciente</a>
 
-    <!-- Tabla lista de pacientes-->
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>ID</th> 
-                <th>Nombre</th>
-                <th>Edad</th>
-                <th>Diagnóstico</th>
-                <th>Acción</th>
-            </tr>
-        </thead>
+<div class="d-flex justify-content-end align-items-center">  
+{% if session.get('usuario') %}
+<!-- Si el usuario a iniciado sesión, mostrar su nombre -->
+ <span class="me-3">Bienvenido, {{ session['usuario'] }}</span>
+ <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary btn-sm">Cerrar Sesión</a>
+{% endif %}
+</div>
+
+<!-- Enlace a la vista de nuevo paciente -->
+<a href="{{url_for('nuevo_paciente')}}" class="btn btn-primary mb-3">Nuevo Paciente</a>
+
+<!-- Formulario para realizar la busqueda con filtro -->
+<form action="{{ url_for('index') }}" method="get" class="mb-3 d-flex">
+
+    <!-- Campo de entrada de texto para el filtro de busqueda -->
+     <input type="text" name="filtro" class="form-control me-2" placeholder="Buscar por nombre o diagnóstico" 
+        value="{{ request.args.get('filtro', '') }}">
+    <!-- Botón de búsqueda -->
+        <button type="submit" class="btn btn-primary">Buscar</button>
+</form>
+
+<!-- Tabla lista de pacientes-->
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th> 
+            <th>Nombre</th>
+            <th>Edad</th>
+            <th>Diagnóstico</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
         <tbody>
             <!-- {# Iterar sobre la lista de pacientes y mostrar sus datos en la tabla #} -->
             {% for paciente in pacientes %}
@@ -36,7 +55,7 @@
             {% endfor %}
 
         </tbody>
-    </table>
+</table>
     <!-- Aqui termina el bloque de contenido de la página-->
 {% endblock %}
 </body>

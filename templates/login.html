@@ -2,6 +2,12 @@
 {% block title %}Iniciar Sesión{% endblock %} <!-- Título de la página -->
 {% block content %} <!-- Aquí se define el contenido específico de la página -->
 
+<div class="d-flex justify-content-end align-items-center">
+<!-- Si no ha iniciado sesión, mostrar un mensaje de error -->
+<!-- <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-sm me-2">Iniciar Sesión</a> -->
+<a href="{{ url_for('registro') }}" class="btn btn-outline-success btn-sm">Registrarse</a>    
+</div>
+
 <h2>Iniciar Sesión</h2>
 <form method="post">
     <input type="text" name="usuario" placeholder="Usuario" required class="form-control mb-2"><br>
@@ -10,6 +16,6 @@
     <button class="btn btn-primary">Entrar</button>
 </form><br>
 
-<a href="{{ url_for('registro') }}">Registrarse></a>
+<!-- <a href="{{ url_for('registro') }}">Registrarse></a> -->
 
 {% endblock %} <!-- Fin del bloque de contenido -->
