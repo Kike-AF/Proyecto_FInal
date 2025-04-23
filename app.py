@@ -2,8 +2,14 @@ from flask import Flask, request, render_template, redirect, url_for, session, f
 
 import db
 import secrets
+import logging
+
+# Configuración del logging
+logging.basicConfig(level=logging.DEBUG)  # Puedes cambiar el nivel a INFO, WARNING, ERROR, etc. """
+
 
 app = Flask(__name__)
+print(secrets.token_hex(32))  # Genera una clave secreta segura para producción
 app.secret_key = secrets.token_hex(32) # Generar una clave secreta aleatoria para la sesión
 
 # Inicializar la base de datos
@@ -12,9 +18,25 @@ db.init_db()
 @app.route('/')
 def index():
 
-    # Obtener lista de pacientes 
-    pacientes = db.obtener_pacientes()
-    return render_template('index.html', pacientes=pacientes)
+    # Obtener el valor del parámetro filtro de la URL, (por ejemplo para buscar pacientes por nombre o diagnóstico)
+    # si no se proporciona un filtro se usa una cadena vacia con valor predeterminado
+    filtro = request.args.get('filtro', '')
+
+    # Obtener el valor del parametro 'pagina' de la URL, que indica la página actual de los resultados
+    # Si no se proporciona, se establece en 1 por defecto
+    pagina = int(request.args.get('pagina', 1))
+
+    # definir el número de resultados por página
+    por_pagina = 15
+
+    # obtener la lista de pacientes de la base de datos
+    pacientes, total = db.obtener_pacientes(filtro=filtro, pagina=pagina, por_pagina=por_pagina)
+
+    # calcula el total de páginas necesarias para mosotrar los resultados, redondeando hacia arriba
+    total_paginas = (total + por_pagina - 1) // por_pagina
+
+    # Renderiza la plantilla index, pasando los datos necesarios para mostrar la vista
+    return render_template('index.html', pacientes=pacientes, filtro=filtro, pagina=pagina, total_paginas=total_paginas)
 
 @app.route('/nuevo_paciente', methods=['GET', 'POST'])
 
@@ -75,5 +97,71 @@ def eliminar_paciente(id):
     flash('Paciente eliminado exitosamente')
     # Redigir a la página de inicio
     return redirect(url_for('index'))
+
+# Ruta para el inicio de sesión
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    # Verificamos si el método de la solicitud es POST
+    if request.method == 'post':
+        # comprobamos si el usuario y la contraseña son correctos usando la función 
+        # verificar_usuario de db.py
+        if db.verificar_usuario(request.form[' '], request.form['contraseña']):
+            # Si son correctas, almacenamos el nombre de usuario en la sesión
+            session['usuario'] = request.form['usuario']
+
+            # Mostramos el mensaje del inicio de sesión exitoso
+            flash('Inicio de sesión exitoso.')
+
+            return redirect(url_for('index'))
+        else:
+            # Si no son correctas, mostramos un mensaje de error
+            flash('Usuario o contraseña incorrectos.')
+
+# Si el método de la solicitud es GET (cuando se carga la página del formulario),
+    #  renderizamos la plantilla de inicio de sesión
+    return render_template('login.html')
+
+# Ruta para manejar el registro de usuarios
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    # verificamos si el método de la solicitud es 'POST' (el usuario envió formulario)
+    if request.method == 'POST':
+        # Intentamos registrar el usuario usando la función registrar_usuario
+        exito = db.registrar_usuario(request.form['usuario'], request.form['contraseña'])
+        if exito:
+            # Mostramos el mensaje 
+            flash("El usuario fué regitrado. Ahora puedes iniciar sesión.", "success")
+
+            # Redirigimos al usuario a la página de inicio de sesión
+            return redirect(url_for('login'))
+        else:
+            # Error el usuario ya existe
+            flash('Ese usuario ya existe.', 'danger')
+
+    return render_template('register.html')
+
+
+# Ruta para cerrar sesión
+@app.route('/logout')
+def logout():
+
+    # Eliminamos el nombre de usuario de la sesión
+    session.pop('usuario', None)
+    # Mostramos el mensaje de cierre de sesión exitoso
+    flash('Has cerrado sesión exitosamente.')
+    # Redirigimos al usuario a la página de inicio
+    return redirect(url_for('index'))
+
+
+# Se usa para que antes de cualquier requerimiento se ejecute "requerir_login()" 
+@app.before_request
+def requerir_login():
+    # Esta función se asegura de que los usuarios que intenten acceder a ciertas rutas
+    # estén autenticados
+
+    rutas_libres = ['login', 'registro', 'static']
+
+    if request.endpoint not in rutas_libres and 'usuario' not in session:
+        return redirect(url_for('login'))
 
 app.run(host='0.0.0.0', port=5000, debug=True)

@@ -1,4 +1,6 @@
 import sqlite3 # Importamos el modulo sqlite3
+import werkzeug.security # importamos el modulo werkzeug.security para hashear contraseñas
+from werkzeug.security import generate_password_hash, check_password_hash # importamos las funciones para hashear y verificar contraseñas
 
 # Función para iniciar la base de datos 
 
@@ -47,17 +49,47 @@ def agregar_paciente(nombre, edad, diagnostico):
 
     # Función para obtener todos los pacientes de la base de datos
 
-def obtener_pacientes():
+def buscar_pacientes(filtro="", pagina=1, por_pagina=5):
+    # Calculamos el desplazamiento para la paginación
+    offset = (pagina - 1) * por_pagina
     try:
         conn = sqlite3.connect('data.db') 
         cursor = conn.cursor() 
-        cursor.execute('SELECT * FROM Pacientes')
+
+        # Si hay un filtro, lo aplicamos a la consulta
+        if filtro:
+            consulta = '''
+                SELECT * FROM Pacientes
+                WHERE nombre LIKE ? or diagnostico LIKE ?
+                LIMIT ? OFFSET ?
+            '''
+            parametros = ('%' + filtro + '%', '%' + filtro + '%', por_pagina, offset)
+            cursor.execute(consulta, parametros)
+
+        else:
+            # Si no hay filtro, solo aplicamos la paginación
+            consulta = '''
+                SELECT * FROM Pacientes
+                LIMIT ? OFFSET ?
+            '''
+            parametros = (por_pagina, offset)
+            cursor.execute(consulta, parametros)
+
         pacientes = cursor.fetchall() # Obtenemos todos los resultados
+
+        if filtro:
+            # Obtenemos el total de pacientes para la paginación
+            cursor.execute('SELECT COUNT(*) FROM Pacientes WHERE nombre LIKE ? or diagnostico LIKE ?', ('%' + filtro + '%', '%' + filtro + '%'))
+        else:
+            cursor.execute('SELECT COUNT(*) FROM Pacientes')
+        total_pacientes = cursor.fetchone()[0] # Obtenemos el total de pacientes
+
         conn.close() 
-        return pacientes # Retornamos la lista de pacientes
+        return pacientes, total_pacientes # Retornamos la lista de pacientes
+    
     except sqlite3.Error as e:
         print(f"Error al conectar a la base de datos: {e}")
-        return []
+        return [], 0 # Retornamos una lista vacía y 0 si hay un error
     
     # Función para obtener un paciente por su ID
 def obtener_paciente_por_id(id):
@@ -87,3 +119,35 @@ def eliminar_paciente(id):
     cursor.execute('DELETE FROM Pacientes WHERE id = ?', (id,))
     conn.commit() 
     conn.close()
+
+# Función para registrar usuario
+def registrar_usuario(usuario, contraseña):
+    conn = sqlite3.connect('data.db')
+    cursor = conn.cursor()
+    hashed_contraseña = generate_password_hash(contraseña)  # Hasheamos la contraseña
+
+    try:
+        cursor.execute('''
+            INSERT INTO Usuarios (usuario, contraseña)
+            VALUES (?, ?)
+        ''', (usuario, hashed_contraseña))
+        conn.commit()
+        return True  # Registro exitoso
+    except sqlite3.IntegrityError:
+        print("El usuario ya existe.")
+    finally:
+        conn.close()
+
+# Función para autenticar usuario
+def verificar_usuario(usuario, contraseña):
+    conn = sqlite3.connect('data.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT contraseña FROM Usuarios WHERE usuario = ?', (usuario,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        hashed_contraseña = row[0]
+        return check_password_hash(hashed_contraseña, contraseña)  # Verificamos la contraseña
+    
+    return False  # Usuario no encontrado o contraseña incorrecta
