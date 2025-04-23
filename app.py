@@ -205,7 +205,27 @@ def exportar_excel():
                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     headers={'Content-Disposition': 'attachment; filename=pacientes.xlsx'})
 
+@app.route('/graficas')
+def graficas():
+    # Conectarnos a la base de datos
+    conn = sqlite3.connect('data.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT diagnostico, COUNT(*) FROM Pacientes GROUP BY diagnostico')
+    resultados = cursor.fetchall()
+    # Obtenemos los resultados
+    cursor.execute('SELECT edad FROM Pacientes')
+    filas = cursor.fetchall()
+    edades = []
+    for fila in filas:
+        edades.append(fila[0])
 
+    conn.close()
+
+    # Creamos una lista de etiquetas y valores para la gráfica
+    etiquetas = [fila[0] for fila in resultados]
+    conteos = [fila[1] for fila in resultados] # número de pacientes por diagnóstico
+
+    return render_template('graficas.html', etiquetas=etiquetas, conteos=conteos, edades=edades) 
    
 app.run(host= '0.0.0.0', port=5000, debug=True)
 
