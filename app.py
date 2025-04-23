@@ -128,7 +128,7 @@ def registro():
         exito = db.registrar_usuario(request.form['usuario'], request.form['contraseña'])
         if exito:
             # Mostramos el mensaje 
-            flash("El usuario fué regitrado. Ahora puedes iniciar sesión.", "success")
+            flash("El usuario fué registrado. Ahora puedes iniciar sesión.", "success")
 
             # Redirigimos al usuario a la página de inicio de sesión
             return redirect(url_for('login'))
@@ -136,7 +136,7 @@ def registro():
             # Error el usuario ya existe
             flash('Ese usuario ya existe.', 'danger')
 
-    return render_template('register.html')
+    return render_template('registro.html')
 
 
 # Ruta para cerrar sesión
