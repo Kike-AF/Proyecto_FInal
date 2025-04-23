@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Iniciar Sesión{% endblock %} <!-- Título de la página -->
+{% block content %} <!-- Aquí se define el contenido específico de la página -->
+
+<h2>Iniciar Sesión</h2>
+<form method="post">
+    <input type="text" name="usuario" placeholder="Usuario" required class="form-control mb-2"><br>
+    <input type="password" name="contrasena" placeholder="Contraseña" required class="form-control mb-2"><br>
+
+    <button class="btn btn-primary">Entrar</button>
+</form><br>
+
+<a href="{{ url_for('registro') }}">Registrarse></a>
+
+{% endblock %} <!-- Fin del bloque de contenido -->

@@ -2,22 +2,18 @@ from flask import Flask, request, render_template, redirect, url_for, session, f
 
 import db
 import secrets
-import logging
-
-# Configuración del logging
-logging.basicConfig(level=logging.DEBUG)  # Puedes cambiar el nivel a INFO, WARNING, ERROR, etc. """
-
 
 app = Flask(__name__)
 print(secrets.token_hex(32))  # Genera una clave secreta segura para producción
-app.secret_key = secrets.token_hex(32) # Generar una clave secreta aleatoria para la sesión
+app.secret_key = secrets.token_hex(32)  # Genera una clave secreta segura para producción
+
 
 # Inicializar la base de datos
 db.init_db()
 
+
 @app.route('/')
 def index():
-
     # Obtener el valor del parámetro filtro de la URL, (por ejemplo para buscar pacientes por nombre o diagnóstico)
     # si no se proporciona un filtro se usa una cadena vacia con valor predeterminado
     filtro = request.args.get('filtro', '')
@@ -38,74 +34,76 @@ def index():
     # Renderiza la plantilla index, pasando los datos necesarios para mostrar la vista
     return render_template('index.html', pacientes=pacientes, filtro=filtro, pagina=pagina, total_paginas=total_paginas)
 
+
 @app.route('/nuevo_paciente', methods=['GET', 'POST'])
-
 def nuevo_paciente():
-
-    # Obtener los datos del formulario
     if request.method == 'POST':
+        # obtener los datos del formulario
         nombre = request.form['nombre']
         edad = request.form['edad']
         diagnostico = request.form['diagnostico']
-
+        
         if not nombre or not edad or not diagnostico:
-            flash('Por favor, completa todos los campos obligatorios', 'error')
+            flash('Por favor, completa todos los campos son obligatorios.')
             return redirect(url_for('nuevo_paciente'))
 
-        # Agregar el nuevo paciente a la base de datos
+        # agregar el nuevo paciente a la base de datos
         db.agregar_paciente(nombre, edad, diagnostico)
-        flash('Paciente agregado exitosamente')
-
-        # Redigir a la página de inicio
+        flash('Paciente agregado exitosamente.')
+                
+        # redirigir a la página principal
         return redirect(url_for('index'))
-    
-    # Si es un GET, simplemente mostramos el formulario
+      
+    # Si la solicitud es GET, simplemente renderizamos el formulario
     return render_template('nuevo_paciente.html')
 
-# Ruta para editar un paciente
+
+# Ruta editar un paciente. acepta metodos GET y POST
 @app.route('/editar_paciente/<int:id>', methods=['GET', 'POST'])
 def editar_paciente(id):
-    # Obtener el paciente de la base de datos
-    paciente = db.obtener_paciente(id)
-
-    # Si el paciente fue enviado con el metodo post
+    # obtener el paciente de la base de datos
+    paciente = db.obtener_paciente_por_id(id)
+    
+    # si el formulario fué enviado con el método POST
     if request.method == 'POST':
-        # Obtener los datos del formulario
+        # obtener los datos del formulario
         nombre = request.form['nombre']
         edad = request.form['edad']
         diagnostico = request.form['diagnostico']
 
-        # Verificar que los campos no estén vacíos
+        # verificar si los campos no están vacios
         if not nombre or not edad or not diagnostico:
-            flash('Por favor, completa todos los campos que son obligatorios')
+            flash('Por favor, completa todos los campos son obligatorios.')
             return redirect(url_for('editar_paciente', id=id))
 
-        # Actualizar el paciente en la base de datos
+        # actualizar el paciente en la base de datos
         db.actualizar_paciente(id, nombre, int(edad), diagnostico)
-        flash('Paciente actualizado exitosamente')
-
-        # Redigir a la página de inicio
+        flash('Paciente actualizado exitosamente.')
+        
+        # redirigir a la página principal
         return redirect(url_for('index'))
-    # Si la solicitud es un GET, simplemente renderizamos el formulario 
+    
+    # Si la solicitud es GET, simplemente renderizamos el formulario
     return render_template('editar_paciente.html', paciente=paciente)
 
-# Define la ruta que responda a las solicitudes POST para eliminar un paciente
+
+# define una ruta que responda a solicitudes POST para eliminar un paciente con un ID específico
 @app.route('/eliminar_paciente/<int:id>', methods=['POST'])
 def eliminar_paciente(id):
-    # Llamamos a la función de eliminar paciente en la base de datos
+    # llamamos a la función eliminar_paciente de db.py
     db.eliminar_paciente(id)
-    flash('Paciente eliminado exitosamente')
-    # Redigir a la página de inicio
+    flash('Paciente eliminado exitosamente.')
+    # redirigir a la página principal
     return redirect(url_for('index'))
 
 # Ruta para el inicio de sesión
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     # Verificamos si el método de la solicitud es POST
-    if request.method == 'post':
+    if request.method == 'POST':
         # comprobamos si el usuario y la contraseña son correctos usando la función 
         # verificar_usuario de db.py
-        if db.verificar_usuario(request.form[' '], request.form['contraseña']):
+        if db.verificar_usuario(request.form['usuario'], request.form['contraseña']):
             # Si son correctas, almacenamos el nombre de usuario en la sesión
             session['usuario'] = request.form['usuario']
 
@@ -117,7 +115,7 @@ def login():
             # Si no son correctas, mostramos un mensaje de error
             flash('Usuario o contraseña incorrectos.')
 
-# Si el método de la solicitud es GET (cuando se carga la página del formulario),
+    # Si el método de la solicitud es GET (cuando se carga la página del formulario),
     #  renderizamos la plantilla de inicio de sesión
     return render_template('login.html')
 
@@ -163,5 +161,8 @@ def requerir_login():
 
     if request.endpoint not in rutas_libres and 'usuario' not in session:
         return redirect(url_for('login'))
+ 
 
-app.run(host='0.0.0.0', port=5000, debug=True)
+
+app.run(host= '0.0.0.0', port=5000, debug=True)
+
