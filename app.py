@@ -224,8 +224,9 @@ def graficas():
     # Creamos una lista de etiquetas y valores para la gráfica
     etiquetas = [fila[0] for fila in resultados]
     conteos = [fila[1] for fila in resultados] # número de pacientes por diagnóstico
+    etiquetas_edades = list(range(len(edades)))
 
-    return render_template('graficas.html', etiquetas=etiquetas, conteos=conteos, edades=edades) 
+    return render_template('graficas.html',etiquetas=etiquetas,conteos=conteos,edades=edades,etiquetas_edades=etiquetas_edades)
    
 app.run(host= '0.0.0.0', port=5000, debug=True)
 
