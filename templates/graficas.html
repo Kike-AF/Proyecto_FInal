@@ -2,68 +2,95 @@
 {% block title %}Gráficas{% endblock %}
 {% block content %}
 
-<!-- Contendor para los gráficos -->
 <div class="row">
-    <!-- gráfico de diagnósticos -->
-    <div class="col-md-6">
+  <!-- Gráfico de Diagnósticos -->
+  <div class="col-md-6 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title text-center">Pacientes por Diagnóstico</h5>
         <canvas id="graficoDiagnosticos"></canvas>
+      </div>
     </div>
-    <!-- gráfico de edades -->
-    <div class="col-md-6">
+  </div>
+
+  <!-- Gráfico de Edades -->
+  <div class="col-md-6 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title text-center">Distribución de Edades</h5>
         <canvas id="graficoEdades"></canvas>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- Cargar el char.js desde un CDN -->
+<!-- Cargar Chart.js desde CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!--<h3>Debug:</h3>
-<p>Etiquetas: {{ etiquetas }}</p>
-<p>Conteos: {{ conteos }}</p>
-<p>Edades: {{ edades }}</p>
-<p>Etiquetas edades: {{ etiquetas_edades }}</p>-->
-
 <script>
-    // Gráfico de diagnósticos
-    const ctxDiagnosticos = document.getElementById('graficoDiagnosticos');
-
-    // Se crea el gráfico de barras
-    new Chart(ctxDiagnosticos, {
-        type: 'bar',
-        data: {
-            labels: {{ etiquetas|safe }},
-        datasets: [{
-            label: 'Pacientes por Diagnóstico',
-            data: {{ conteos | safe }},
+  // Diagnósticos
+  const ctxDiagnosticos = document.getElementById('graficoDiagnosticos');
+  new Chart(ctxDiagnosticos, {
+    type: 'bar',
+    data: {
+      labels: {{ etiquetas | safe }},
+      datasets: [{
+        label: 'Cantidad',
+        data: {{ conteos | safe }},
         backgroundColor: 'rgba(54, 162, 235, 0.6)',
         borderColor: 'rgba(54, 162, 235, 1)',
         borderWidth: 1
-            }]
-        },    
-    });
-
-    // Gráfico de edades
-    const ctxEdades = document.getElementById('graficoEdades');
-
-    // Se crea el gráfico de líneas
-    new Chart(ctxEdades, {
-        type: 'line',
-        data: {
-            labels: {{ etiquetas_edades | safe }},
-            datasets: [{
-            label: 'Pacientes por Edad',
-            data: {{ edades | safe }},
-            borderColor: 'rgba(255, 99, 132, 1)',
-            fill: false,
-            tension: 0.3 
-            }]
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: {
+        duration: 1000,
+        easing: 'easeOutQuart'
+      },
+      scales: {
+        y: {
+          beginAtZero: true
         }
-    });
-</script>
+      },
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
+  });
 
-<script>
-    console.log("Chart.js cargado:", typeof Chart); // debería decir "function"
+  // Edades
+  const ctxEdades = document.getElementById('graficoEdades');
+  new Chart(ctxEdades, {
+    type: 'line',
+    data: {
+      labels: [...Array({{ edades|length }}).keys()],
+      datasets: [{
+        label: 'Edad de Pacientes',
+        data: {{ edades | safe }},
+        borderColor: 'rgba(255, 99, 132, 1)',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: {
+        duration: 1000,
+        easing: 'easeOutQuart'
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top'
+        }
+      }
+    }
+  });
 </script>
-
 
 {% endblock %}
+
